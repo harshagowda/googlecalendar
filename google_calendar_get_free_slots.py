@@ -12,12 +12,17 @@ import pytz
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 
-def get_calendar_service():
-    """Get an authorized Google Calendar API service instance."""
+def get_calendar_service(credentials_path='credentials.json', token_path='token.pickle'):
+    """Get an authorized Google Calendar API service instance.
+
+    Args:
+        credentials_path: Path to the credentials.json file
+        token_path: Path to save/load the token.pickle file
+    """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens
-    if os.path.exists('../token.pickle'):
-        with open('../token.pickle', 'rb') as token:
+    if os.path.exists(token_path):
+        with open(token_path, 'rb') as token:
             creds = pickle.load(token)
 
     # If there are no (valid) credentials available, let the user log in.
@@ -25,20 +30,24 @@ def get_calendar_service():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
+            if not os.path.exists(credentials_path):
+                raise FileNotFoundError(f"Credentials file not found at: {credentials_path}")
+
             flow = InstalledAppFlow.from_client_secrets_file(
-                '../credentials.json', SCOPES)
+                credentials_path, SCOPES)
             creds = flow.run_local_server(port=0)
 
         # Save the credentials for the next run
-        with open('../token.pickle', 'wb') as token:
+        with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
 
     return build('calendar', 'v3', credentials=creds)
 
 
-def get_availability(start_hour=9, end_hour=17, days=7, slot_duration=30, mode="both", debug=False):
+def get_availability(start_hour=9, end_hour=17, days=7, slot_duration=30, mode="both", debug=False,
+                     credentials_path='credentials.json', token_path='token.pickle'):
     """Get availability from Google Calendar for the specified working hours and days."""
-    service = get_calendar_service()
+    service = get_calendar_service(credentials_path, token_path)
 
     # Get timezone from calendar
     calendar = service.calendars().get(calendarId='primary').execute()
@@ -175,15 +184,19 @@ def main():
     parser.add_argument('--days', type=int, default=5,
                         help='Number of days to check ahead (default: 5)')
     parser.add_argument('--start', type=int, default=9,
-                        help='Start hour of working day, 24h format (default: 8)')
+                        help='Start hour of working day, 24h format (default: 9)')
     parser.add_argument('--end', type=int, default=17,
-                        help='End hour of working day, 24h format (default: 18)')
+                        help='End hour of working day, 24h format (default: 17)')
     parser.add_argument('--duration', type=int, default=30,
                         help='Duration of time slots in minutes (default: 30)')
     parser.add_argument('--mode', choices=['free', 'busy', 'both'], default='both',
                         help='What to display: free slots, busy slots, or both (default: both)')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug mode to see detailed event information')
+    parser.add_argument('--credentials', type=str, default='credentials.json',
+                        help='Path to the credentials.json file (default: credentials.json)')
+    parser.add_argument('--token', type=str, default='token.pickle',
+                        help='Path to save/load the token.pickle file (default: token.pickle)')
 
     args = parser.parse_args()
 
@@ -193,7 +206,9 @@ def main():
         days=args.days,
         slot_duration=args.duration,
         mode=args.mode,
-        debug=args.debug
+        debug=args.debug,
+        credentials_path=args.credentials,
+        token_path=args.token
     )
 
 
