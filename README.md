@@ -72,7 +72,7 @@ Before using the script, you need to set up the Google Calendar API:
 Run the script using Python:
 
 ```bash
-python calendar-cli-fixed.py
+python google_calendar_get_free_slots.py
 ```
 
 ### Command-Line Arguments
@@ -90,17 +90,17 @@ Customize the script behavior with these arguments:
 
 Check availability for the next 7 days:
 ```bash
-python calendar-cli-fixed.py --days 7
+python google_calendar_get_free_slots.py --days 7
 ```
 
 Check evening availability from 6 PM to 10 PM:
 ```bash
-python calendar-cli-fixed.py --start 18 --end 22
+python google_calendar_get_free_slots.py --start 18 --end 22
 ```
 
 Show only free time slots in 1-hour increments:
 ```bash
-python calendar-cli-fixed.py --mode free --duration 60
+python google_calendar_get_free_slots.py --mode free --duration 60
 ```
 
 ### First Run Authentication
